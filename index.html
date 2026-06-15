@@ -313,15 +313,15 @@ function findEmail(lead) {
     + 'IMPORTANT: Try at least 2-3 searches before giving up.\n\n'
     + 'Reply ONLY with JSON: {"found":true,"email":"x@y.com","source":"web"} or {"found":false,"email":"","source":"none"}';
 
+  // Always read key and proxy fresh at call time
+  var key = (document.getElementById('api-key').value || '').trim();
+  var proxy = (document.getElementById('proxy-url').value || '').trim() || DEFAULT_PROXY;
+
   var headers = {
     'Content-Type': 'application/json',
-    'anthropic-version': '2023-06-01'
+    'anthropic-version': '2023-06-01',
+    'x-api-key': key,
   };
-
-  // When running via server proxy, send the API key in the request
-  // When running in claude.ai (no key needed), skip
-  var key = getApiKey();
-  if (key) headers['x-api-key'] = key;
 
   var body = JSON.stringify({
     model: 'claude-sonnet-4-20250514',
@@ -330,7 +330,7 @@ function findEmail(lead) {
     messages: [{ role: 'user', content: prompt }]
   });
 
-  var fetchP = fetch(API_ENDPOINT, { method: 'POST', headers: headers, body: body })
+  var fetchP = fetch(proxy, { method: 'POST', headers: headers, body: body })
     .then(function(r) {
       if (!r.ok) return r.text().then(function(t) { throw new Error('API ' + r.status + ': ' + t.slice(0,100)); });
       return r.json();
