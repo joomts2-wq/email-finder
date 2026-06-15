@@ -112,10 +112,14 @@ tr.found td { background: #f0fdf4; }
 
   <!-- API KEY BAR -->
   <div class="api-bar">
-    <label>&#128273; Chave API Anthropic:</label>
-    <input type="password" id="api-key" placeholder="sk-ant-api03-..." oninput="updateApiStatus()">
+    <label style="white-space:nowrap">&#128273; Chave API:</label>
+    <input type="password" id="api-key" placeholder="sk-ant-api03-..." oninput="updateApiStatus()" style="flex:2;min-width:220px">
+    <label style="white-space:nowrap;margin-left:4px">&#127760; Proxy URL:</label>
+    <input type="text" id="proxy-url" value="https://playup-email-scraper.joomts2.workers.dev" oninput="updateApiStatus()" style="flex:2;min-width:200px;font-size:11px">
     <span class="api-status api-missing" id="api-status">&#10007; Chave em falta</span>
-    <span style="font-size:11px;color:#9ca3af">Obtém em console.anthropic.com</span>
+  </div>
+  <div style="font-size:11px;color:#9ca3af;margin-bottom:.75rem">
+    Chave API em <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#2563eb">console.anthropic.com</a>
   </div>
 
   <div id="autosave-bar" class="autosave-info" style="display:none"></div>
@@ -253,11 +257,9 @@ var AUTOSAVE_EVERY = 10;
 var TIMEOUT_MS = 45000;
 
 // Detect if running via server or file://
-var API_ENDPOINT = (location.protocol === 'http:' || location.protocol === 'https:')
-  ? '/api/messages'
-  : 'https://api.anthropic.com/v1/messages';
-
-var IS_DESKTOP = location.protocol === 'http:' || location.protocol === 'https:';
+var DEFAULT_PROXY = 'https://playup-email-scraper.joomts2.workers.dev';
+var API_ENDPOINT = DEFAULT_PROXY;
+var IS_DESKTOP = true;
 
 function getApiKey() {
   return (document.getElementById('api-key').value || '').trim();
@@ -265,12 +267,12 @@ function getApiKey() {
 
 function updateApiStatus() {
   var key = getApiKey();
+  var proxy = (document.getElementById('proxy-url').value || '').trim();
+  if (proxy) API_ENDPOINT = proxy;
   var ok = key.startsWith('sk-ant-');
   var el = document.getElementById('api-status');
-  el.textContent = ok ? '&#10003; Chave OK' : '&#10007; Chave em falta';
+  el.textContent = ok ? '✓ Chave OK' : '✗ Chave em falta';
   el.className = 'api-status ' + (ok ? 'api-ok' : 'api-missing');
-  // Show/hide api bar based on mode
-  document.getElementById('api-key').parentElement.style.display = IS_DESKTOP ? '' : 'none';
 }
 
 function rebuildCountryDropdown() {
@@ -380,9 +382,8 @@ function processLead(lead) {
 function startBatch(targets) {
   if (processing || targets.length === 0) return;
 
-  // Validate API key when running in desktop mode
-  if (IS_DESKTOP && !getApiKey().startsWith('sk-ant-')) {
-    alert('Por favor introduz a tua chave API Anthropic (sk-ant-...) antes de pesquisar.');
+  if (!getApiKey().startsWith('sk-ant-')) {
+    alert('Por favor introduz a tua chave API Anthropic (sk-ant-...) antes de pesquisar.\nObtém em: console.anthropic.com/settings/keys');
     return;
   }
 
